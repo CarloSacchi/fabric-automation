@@ -1,0 +1,52 @@
+trigger:
+  - none
+
+variables:
+- name: environmentServiceNameAzureRM
+  value: ENVServiceConnection 
+- name: backendServiceArm
+  value: ENVServiceConnection 
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: TerraformInstaller@0
+  displayName: Terraform Installer
+  inputs:
+    terraformVersion: 'latest'
+
+- task: TerraformTaskV3@3
+  displayName: Terraform Init
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    commandOptions: '-reconfigure -lock=false'
+    backendServiceArm: $(backendServiceArm)
+    backendAzureRmResourceGroupName: 'myrg'
+    backendAzureRmStorageAccountName: 'yourbackendstorage2024'
+    backendAzureRmContainerName: 'cterraformstate'
+    backendAzureRmKey: 'terraform.tfstate'
+
+- task: TerraformTaskV3@3
+  displayName: Terraform Validate
+  inputs:
+    provider: 'azurerm'
+    command: 'validate'
+    environmentServiceNameAzureRM: $(environmentServiceNameAzureRM)
+
+- task: TerraformTaskV3@3
+  displayName: Terraform Plan
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    commandOptions: '-var-file="./environment/development.tfvars"'
+    environmentServiceNameAzureRM: $(environmentServiceNameAzureRM)
+
+# - task: TerraformTaskV3@3
+#   displayName: Terraform Apply
+#   inputs:
+#     provider: 'azurerm'
+#     command: 'apply'
+#     commandOptions: '-auto-approve -var-file="./environment/development.tfvars"'
+#     environmentServiceNameAzureRM: $(environmentServiceNameAzureRM)
